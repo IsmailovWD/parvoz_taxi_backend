@@ -36,7 +36,6 @@ module.exports = {
       },
       deleted_at: {
         type: Sequelize.INTEGER,
-        default: 0,
         allowNull: false,
       },
       created_date: {

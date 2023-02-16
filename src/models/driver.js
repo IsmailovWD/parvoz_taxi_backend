@@ -17,6 +17,11 @@ module.exports = function (sequelize, DataTypes) {
         type: DataTypes.STRING(50),
         allowNull: false,
       },
+      deleted_at: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
       password: {
         type: DataTypes.STRING(150),
         allowNull: false,
