@@ -5,7 +5,7 @@ module.exports = async function () {
   cron.schedule("*/5 * * * *", async () => {
     const model = await Order.findAll({
       where: {
-        status_id: [1],
+        status_id: [1,6],
       },
     });
     for (let i = 0; i < model.length; i++) {
