@@ -323,16 +323,19 @@ class UserController extends BaseController {
       },
     });
     if (model) {
-      model.lat = req.body.lat.toString();
-      model.long = req.body.long.toString();
-      model.closing_date = Math.floor(new Date().getTime() / 1000);
-      model.save();
+      if (req.currentUser.active == 1 && req.currentUser.active_admin == 1) {
+        if (req.currentUser.driver_status == 1 || req.currentUser.driver_status == 6){
+          model.lat = req.body.lat.toString();
+          model.long = req.body.long.toString();
+          model.closing_date = Math.floor(new Date().getTime() / 1000);
+          model.save();
+        }else{
+          await EmptyDriver.destroy({where: {driver_id: req.currentUser.id}})
+        }
+      }
     } else {
       if (req.currentUser.active == 1 && req.currentUser.active_admin == 1) {
-        if (
-          req.currentUser.driver_status == 1 ||
-          req.currentUser.driver_status == 6
-        ) {
+        if (req.currentUser.driver_status == 1 || req.currentUser.driver_status == 6) {
           await EmptyDriver.create({
             driver_id: req.currentUser.id,
             lat: req.body.lat.toString(),
