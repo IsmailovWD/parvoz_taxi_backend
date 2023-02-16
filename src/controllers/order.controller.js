@@ -8,6 +8,7 @@ const {
   CompletedOrder,
   EmptyDriver,
   WaitingOrder,
+  DriverStatus,
 } = require("../models/init-models");
 const BaseController = require("./BaseController");
 const { Op } = require("sequelize");
