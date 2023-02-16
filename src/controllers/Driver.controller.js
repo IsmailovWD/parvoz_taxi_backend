@@ -156,6 +156,7 @@ class UserController extends BaseController {
       menejer_id: null,
       password: password,
       day_price,
+      deleted_at: 0,
     });
     res.send({
       success: true,
