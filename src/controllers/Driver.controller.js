@@ -524,6 +524,7 @@ class UserController extends BaseController {
         },
       });
       if (drivers.driver_status == 1 || drivers.driver_status == 6) {
+        await EmptyDriver.destroy({where: {driver_id: req.currentUser.id}})
         model.status_id = 2;
         model.driver_id = req.currentUser.id;
         await model.save();
