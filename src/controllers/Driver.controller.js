@@ -1249,7 +1249,7 @@ class UserController extends BaseController {
     } else {
       model.summa = parseFloat(model.summa) - parseFloat(model.day_price);
     }
-    // await model.save();
+    await model.save();
     await DayPriceDriver.create({
       datetime: Math.floor(new Date().getTime() / 1000),
       driver_id: req.currentUser.id,
