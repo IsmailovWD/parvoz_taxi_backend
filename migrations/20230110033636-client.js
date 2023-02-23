@@ -17,10 +17,14 @@ module.exports = {
         allowNull: true,
       },
       number: {
-        type: Sequelize.STRING(),
+        type: Sequelize.STRING(50),
         allowNull: false,
         unique: true
       },
+      keshbek_summa: {
+        type: Sequelize.DOUBLE(17, 3),
+        allowNull: true,
+      }
     });
   },
 

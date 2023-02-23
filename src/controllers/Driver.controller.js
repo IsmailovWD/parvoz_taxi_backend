@@ -15,6 +15,7 @@ const {
   Agent,
   AgentRegister,
   DayPriceDriver,
+  KeshBackRegister
 } = require("../models/init-models");
 const HttpException = require("../utils/HttpException.utils");
 const cron = require("node-cron");
@@ -23,6 +24,7 @@ const { secret_jwt } = require("../startup/config");
 const BaseController = require("./BaseController");
 const sequelize = require("sequelize");
 var FCM = require("fcm-node");
+const { Client } = require("@grpc/grpc-js");
 var serverKey =
   "AAAAp-XDSiA:APA91bFg1rDmkOSKqRG3tkq2m52aBBp8A7DkVNC0eG6lYu91wqq-_PtAxxzTsJPqViDoJJCvufP1EsFONY2NuIVVCcza-s3ENCjp2dEIVDJpQB0PPMDuWPtLzQrkTBQvUMq59uFUy9pR";
 var fcm = new FCM(serverKey);
@@ -324,13 +326,13 @@ class UserController extends BaseController {
     });
     if (model) {
       if (req.currentUser.active == 1 && req.currentUser.active_admin == 1) {
-        if (req.currentUser.driver_status == 1 || req.currentUser.driver_status == 6){
+        if (req.currentUser.driver_status == 1 || req.currentUser.driver_status == 6) {
           model.lat = req.body.lat.toString();
           model.long = req.body.long.toString();
           model.closing_date = Math.floor(new Date().getTime() / 1000);
           model.save();
-        }else{
-          await EmptyDriver.destroy({where: {driver_id: req.currentUser.id}})
+        } else {
+          await EmptyDriver.destroy({ where: { driver_id: req.currentUser.id } })
         }
       }
     } else {
@@ -407,15 +409,15 @@ class UserController extends BaseController {
               "111.111 *\
           DEGREES(ACOS(LEAST(1.0, COS(RADIANS(SUBSTRING_INDEX(`whence`,',', 1)))\
               * COS(RADIANS(" +
-                driver.lat +
-                "))\
+              driver.lat +
+              "))\
               * COS(RADIANS(" +
-                driver.long +
-                " - SUBSTRING_INDEX(`whence`,',', -1)))\
+              driver.long +
+              " - SUBSTRING_INDEX(`whence`,',', -1)))\
               + SIN(RADIANS(SUBSTRING_INDEX(`whence`,',', 1)))\
               * SIN(RADIANS(" +
-                driver.lat +
-                " )))))"
+              driver.lat +
+              " )))))"
             ),
             "distance",
           ],
@@ -527,7 +529,7 @@ class UserController extends BaseController {
         },
       });
       if (drivers.driver_status == 1 || drivers.driver_status == 6) {
-        await EmptyDriver.destroy({where: {driver_id: req.currentUser.id}})
+        await EmptyDriver.destroy({ where: { driver_id: req.currentUser.id } })
         model.status_id = 2;
         model.driver_id = req.currentUser.id;
         await model.save();
@@ -837,8 +839,9 @@ class UserController extends BaseController {
     await WaitingOrder.destroy({
       where: { driver_id: req.currentUser.id, order_id: id },
     });
-    let firma_summa = 0,
-      agent_summa = 0;
+    let firma_summa = 0;
+    let agent_summa = 0;
+    let cash = 0
     const orders = await Order.findOne({
       where: { id },
     });
@@ -850,26 +853,6 @@ class UserController extends BaseController {
         id: req.currentUser.id,
       },
     });
-    // driver summa
-    // if (Math.floor(rates.profit) != 0) {
-    //   firma_summa = ((summa / 100) * rates.profit).toFixed(2);
-    //   drivers.summa -= firma_summa;
-    // }
-    // if (drivers.menejer_id) {
-    //   const agent = await Agent.findOne({
-    //     where: {
-    //       id: drivers.menejer_id,
-    //     },
-    //   });
-    //   agent_summa = ((firma_summa / 100) * agent.percentage).toFixed(2);
-    //   firma_summa -= agent_summa;
-    //   await AgentRegister.create({
-    //     datetime: Math.floor(new Date().getTime() / 1000),
-    //     agent_id: drivers.menejer_id,
-    //     summa: agent_summa,
-    //     type: 1,
-    //   });
-    // }
     const wait_order = await WaitingOrder.findOne({
       where: {
         driver_id: req.currentUser.id,
@@ -896,8 +879,25 @@ class UserController extends BaseController {
       datetime: Math.floor(new Date().getTime() / 1000),
       firma_summa,
       agent_summa,
+      kesh_back_summa: cash,
       driver_id: req.currentUser.id,
     });
+
+    if (orders.dataValues.kashbek_add == 1) {
+      const cashs = await KeshBackRegister.findOne({
+        order: [['datetime', 'DESC']]
+      })
+      if (cashs) {
+        const clients = await Client.findOne({
+          where: {
+            id: orders.dataValues.client_id,
+          }
+        })
+        clients.keshbek_summa = parseFloat(clients.keshbek_summa) + parseFloat(summa) / 100 * parseFloat(cashs.dataValues.profit)
+        clients.save()
+      }
+    }
+
     orders.dataValues.info = order_completed;
     orders.dataValues.driver = drivers;
     if (orders.dataValues.whence) {

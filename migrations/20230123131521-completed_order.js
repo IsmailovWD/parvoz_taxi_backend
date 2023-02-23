@@ -47,12 +47,17 @@ module.exports = {
         allowNull: false,
       },
       firma_summa: {
-        type: Sequelize.DOUBLE(11,2),
+        type: Sequelize.DOUBLE(11, 2),
         allowNull: false,
         defaultValue: 0
       },
       agent_summa: {
-        type: Sequelize.DOUBLE(11,2),
+        type: Sequelize.DOUBLE(11, 2),
+        allowNull: false,
+        defaultValue: 0
+      },
+      kesh_back_summa: {
+        type: Sequelize.DOUBLE(11, 2),
         allowNull: false,
         defaultValue: 0
       }

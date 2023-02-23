@@ -1,5 +1,5 @@
 const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
+module.exports = function (sequelize, DataTypes) {
   return sequelize.define('Order', {
     id: {
       autoIncrement: true,
@@ -23,8 +23,16 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.STRING(50),
       allowNull: true
     },
+    whence_name: {
+      type: DataTypes.STRING(150),
+      allowNull: true
+    },
+    whereto_name: {
+      type: DataTypes.STRING(150),
+      allowNull: true
+    },
     summa: {
-      type: DataTypes.DECIMAL(17,3),
+      type: DataTypes.DECIMAL(17, 3),
       allowNull: true
     },
     client_id: {
@@ -77,16 +85,16 @@ module.exports = function(sequelize, DataTypes) {
     },
     rating: {
       type: DataTypes.INTEGER,
+      allowNull: false
+    },
+    kashbek_add: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 0
     },
-    whence_name: {
-      type: DataTypes.STRING(150),
-      allowNull: true
-    },
-    whereto_name: {
-      type: DataTypes.STRING(150),
-      allowNull: true
+    kashbek_summa: {
+      type: DataTypes.DOUBLE(17, 3),
+      allowNull: false,
+      defaultValue: 0.000
     }
   }, {
     sequelize,

@@ -9,6 +9,7 @@ const {
   EmptyDriver,
   WaitingOrder,
   DriverStatus,
+  Client
 } = require("../models/init-models");
 const BaseController = require("./BaseController");
 const { Op } = require("sequelize");
@@ -44,7 +45,9 @@ class UserController extends BaseController {
     `user`.`firstname` AS `name`,\
     `status`.`name` AS `status`,\
     `status`.`id` AS `status_id`,\
-    `status`.`name` AS `status_name` \
+    `status`.`name` AS `status_name`, \
+    `Order`.`kashbek_add`,\
+    `Order`.`kashbek_summa` \
     FROM\
         `order` AS `Order` \
     LEFT OUTER JOIN `rate` AS `rate`\
@@ -56,11 +59,11 @@ class UserController extends BaseController {
     LEFT OUTER JOIN `order_status` AS `status` \
     ON \
     `Order`.`status_id` = `status`.`id` " +
-        txt +
-        "\
+      txt +
+      "\
     Order by `Order`.`created_date` DESC LIMIT " +
-        req.query.count +
-        " , 20",
+      req.query.count +
+      " , 20",
       { model: Order, raw: true, type: QueryTypes.SELECT }
     );
     res.send({
@@ -78,7 +81,19 @@ class UserController extends BaseController {
       rate_id,
       whence_name,
       whereto_name,
+      kesh_value
     } = req.body;
+    let client = await Client.findOne({
+      where: {
+        number: phone_number
+      }
+    })
+    if (!client) {
+      client = await Client.create({
+        number: phone_number,
+        keshbek_summa: 0
+      })
+    }
     const model = await Order.create({
       created_date: time,
       phone_number,
@@ -87,8 +102,12 @@ class UserController extends BaseController {
       rate_id,
       whence_name,
       whereto_name,
+      client_id: client.dataValues.id,
       user_id: req.currentUser.id,
       status_id: 6,
+      kashbek_add: kesh_value ? 1 : 0,
+      kashbek_summa: kesh_value ? client.dataValues.keshbek_summa : 0,
+      rating: false,
     });
     for (let i = 0; i < model.length; i++) {
       model[i].created_date = new Date(
@@ -99,6 +118,7 @@ class UserController extends BaseController {
       success: true,
       message: "Order created successfully",
     });
+    await this.#emit_new_order(model.id)
     await this.#DriverSearch(whence, model.id, null);
     const sockets = await this.io.fetchSockets();
     for (const soc of sockets) {
@@ -120,6 +140,7 @@ class UserController extends BaseController {
       rate_id,
       status_id: 6,
       client_id: req.currentUser.id,
+      rating: false,
     });
     res.send({
       success: true,
@@ -128,6 +149,43 @@ class UserController extends BaseController {
     });
     await this.#DriverSearch(from, model.id, model.client_id);
   };
+  #emit_new_order = async (id) => {
+    const model = await db.query(
+      "SELECT\
+    `Order`.`id`,\
+    `Order`.`created_date`,\
+    `Order`.`phone_number`,\
+    `rate`.`name` AS `tarif`,\
+    `user`.`firstname` AS `name`,\
+    `status`.`name` AS `status`,\
+    `status`.`id` AS `status_id`,\
+    `status`.`name` AS `status_name`, \
+    `Order`.`kashbek_add`,\
+    `Order`.`kashbek_summa` \
+    FROM\
+        `order` AS `Order` \
+    LEFT OUTER JOIN `rate` AS `rate`\
+    ON \
+        `Order`.`rate_id` = `rate`.`id` \
+    LEFT OUTER JOIN `user` AS `user` \
+    ON\
+        `Order`.`user_id` = `user`.`id` \
+    LEFT OUTER JOIN `order_status` AS `status` \
+    ON \
+    `Order`.`status_id` = `status`.`id` Where `Order`.`id` = " +
+      id +
+      "\
+    Order by `Order`.`created_date` DESC LIMIT 1",
+      { model: Order, raw: true, type: QueryTypes.SELECT }
+    );
+    console.log(model)
+    const sockets = await this.io.fetchSockets();
+    for (const soc of sockets) {
+      if (soc.dataUser.type == "User") {
+        this.io.emit("newOrder", model[0]);
+      }
+    }
+  }
   cancelOrderCreate = async (req, res) => {
     const { id, comment } = req.body;
     let responseData = {};
@@ -258,16 +316,16 @@ class UserController extends BaseController {
                   LEAST(\
                       1.0,\
                       COS(RADIANS(`empty_driver`.`lat`)) * COS(RADIANS('" +
-        lat +
-        "')) * COS(\
+      lat +
+      "')) * COS(\
                           RADIANS(\
                             `empty_driver`.`long` - '" +
-        long +
-        "'\
+      long +
+      "'\
                           )\
                       ) + SIN(RADIANS(`empty_driver`.`lat`)) * SIN(RADIANS('" +
-        lat +
-        "'))\
+      lat +
+      "'))\
                   )\
               )\
           ) AS `distance`\
@@ -278,8 +336,8 @@ class UserController extends BaseController {
       `a`.`driver_id` = `b`.`driver_id`\
       WHERE\
         " +
-        text +
-        " `b`.`distance` BETWEEN 0 AND 10 \
+      text +
+      " `b`.`distance` BETWEEN 0 AND 10 \
       ORDER BY `a`.`datetime` LIMIT 1;",
       { model: Driver, raw: true, type: QueryTypes.SELECT }
     );
@@ -288,27 +346,6 @@ class UserController extends BaseController {
     if (result.length != 0) {
       result = result[0];
       await EmptyDriver.destroy({ where: { driver_id: result.id } });
-      // const sendDriver = await Order.findOne({
-      //   attributes: [
-      //     "id",
-      //     "created_date",
-      //     "phone_number",
-      //     "whence",
-      //     "whereto",
-      //     "status_id",
-      //     "driver_id",
-      //     [sequelize.literal("status.name"), "status_name"],
-      //     "rate_id",
-      //     [sequelize.literal("rate.name"), "rate_name"],
-      //   ],
-      //   include: [
-      //     { model: OrderStatus, as: "status", attributes: [] },
-      //     { model: Rate, as: "rate", attributes: [] },
-      //   ],
-      //   where: {
-      //     id,
-      //   },
-      // });
       const sendDriver = await Order.findOne({
         attributes: [
           "id",
@@ -485,8 +522,8 @@ class UserController extends BaseController {
       `a`.`rate_id` = `c`.`id`\
   WHERE\
       `a`.`status_id` = 4 AND FROM_UNIXTIME(`a`.`closing_date`, '%Y-%m-%d') = FROM_UNIXTIME(" +
-          time +
-          ", '%Y-%m-%d');",
+        time +
+        ", '%Y-%m-%d');",
         { model: Order, raw: true, type: QueryTypes.SELECT }
       );
     } else if (filter == "week") {
@@ -510,8 +547,8 @@ class UserController extends BaseController {
         `a`.`rate_id` = `c`.`id`\
     WHERE\
         `a`.`status_id` = 4 AND FROM_UNIXTIME(`a`.`closing_date`, '%Y-%m-%d') = FROM_UNIXTIME(" +
-            time +
-            ", '%Y-%m-%d');",
+          time +
+          ", '%Y-%m-%d');",
           { model: Order, raw: true, type: QueryTypes.SELECT }
         );
         time -= 86400;
@@ -541,8 +578,8 @@ class UserController extends BaseController {
         `a`.`rate_id` = `c`.`id`\
     WHERE\
         `a`.`status_id` = 4 AND FROM_UNIXTIME(`a`.`closing_date`, '%Y-%m-%d') = FROM_UNIXTIME(" +
-            time +
-            ", '%Y-%m-%d');",
+          time +
+          ", '%Y-%m-%d');",
           { model: Order, raw: true, type: QueryTypes.SELECT }
         );
         time -= 86400;
@@ -653,6 +690,35 @@ class UserController extends BaseController {
       }
     });
   };
+  kashber_update = async (req, res) => {
+    let id = req.params.id;
+    let message;
+    const model = await Order.findOne({ where: { id } });
+    if (model.dataValues.status_id == 4 || model.dataValues.status_id == 5) {
+      await res.send({
+        success: false,
+        message: 'Buyurtmada yakuniga yetdi'
+      })
+    } else {
+      if (model.dataValues.kashbek_add == 0) {
+        const client = await Client.findOne({ where: { id: model.dataValues.client_id } });
+        model.kashbek_add = 1;
+        model.kashbek_summa = client.keshbek_summa;
+        message = 'Keshbek yoqildi'
+        await model.save();
+      } else {
+        model.kashbek_add = 0;
+        model.kashbek_summa = 0;
+        message = 'Keshbek o\'chirildi'
+        await model.save();
+      }
+      await res.send({
+        success: true,
+        message: message,
+        data: model
+      })
+    }
+  }
 }
 
 module.exports = new UserController();

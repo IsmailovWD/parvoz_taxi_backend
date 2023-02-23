@@ -20,8 +20,10 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false,
       unique: "number"
     },
-    token: {
-      type: DataTypes.VIRTUAL
+    keshbek_summa: {
+      type: DataTypes.DOUBLE(17,3),
+      allowNull: false,
+      defaultValue: 0.000
     }
   }, {
     sequelize,

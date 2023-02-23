@@ -90,6 +90,14 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
         default: false
+      },
+      kashbek_add: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
+      kashbek_summa: {
+        type: Sequelize.DOUBLE(17, 3),
+        allowNull: false,
       }
     });
   },

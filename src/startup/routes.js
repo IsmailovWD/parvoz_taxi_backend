@@ -13,6 +13,7 @@ const imgRouter = require("../routes/img.route");
 const custom_location = require("../routes/customLocation.route");
 const reports = require("../routes/report.route");
 const agent = require("../routes/Agent.route");
+const kesh = require("../routes/Keshbek.route");
 
 // const uploadFile = require('../routes/uploadFile.route');
 
@@ -81,6 +82,7 @@ module.exports = async function (app) {
   app.use(`/api/custom_location`, custom_location);
   app.use(`/api/report`, reports);
   app.use(`/api/agent`, agent);
+  app.use(`/api/kesh`, kesh);
 
   // app.use(`/api/v1/upload`, uploadFile);
   app.use(`/api/images`, express.static("uploads"));

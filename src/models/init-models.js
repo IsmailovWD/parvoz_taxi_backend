@@ -1,5 +1,5 @@
 var DataTypes = require("sequelize").DataTypes;
-var sequelize = require("../db/db-sequelize");
+var sequelize = require('../db/db-sequelize')
 var _Agent = require("./agent");
 var _AgentRegister = require("./agent_register");
 var _CancelOrderDriver = require("./cancel_order_driver");
@@ -12,6 +12,7 @@ var _DriverInfo = require("./driver_info");
 var _DriverRating = require("./driver_rating");
 var _DriverStatus = require("./driver_status");
 var _EmptyDriver = require("./empty_driver");
+var _KeshBackRegister = require("./kesh_back_register");
 var _Order = require("./order");
 var _OrderStatus = require("./order_status");
 var _Rate = require("./rate");
@@ -33,6 +34,7 @@ var DriverInfo = _DriverInfo(sequelize, DataTypes);
 var DriverRating = _DriverRating(sequelize, DataTypes);
 var DriverStatus = _DriverStatus(sequelize, DataTypes);
 var EmptyDriver = _EmptyDriver(sequelize, DataTypes);
+var KeshBackRegister = _KeshBackRegister(sequelize, DataTypes);
 var Order = _Order(sequelize, DataTypes);
 var OrderStatus = _OrderStatus(sequelize, DataTypes);
 var Rate = _Rate(sequelize, DataTypes);
@@ -49,20 +51,11 @@ Agent.hasMany(Driver, { as: "drivers", foreignKey: "menejer_id" });
 Order.belongsTo(Client, { as: "client", foreignKey: "client_id" });
 Client.hasMany(Order, { as: "orders", foreignKey: "client_id" });
 CancelOrderDriver.belongsTo(Driver, { as: "driver", foreignKey: "driver_id" });
-Driver.hasMany(CancelOrderDriver, {
-  as: "cancel_order_drivers",
-  foreignKey: "driver_id",
-});
+Driver.hasMany(CancelOrderDriver, { as: "cancel_order_drivers", foreignKey: "driver_id" });
 CompletedOrder.belongsTo(Driver, { as: "driver", foreignKey: "driver_id" });
-Driver.hasMany(CompletedOrder, {
-  as: "completed_orders",
-  foreignKey: "driver_id",
-});
+Driver.hasMany(CompletedOrder, { as: "completed_orders", foreignKey: "driver_id" });
 DayPriceDriver.belongsTo(Driver, { as: "driver", foreignKey: "driver_id" });
-Driver.hasMany(DayPriceDriver, {
-  as: "day_price_drivers",
-  foreignKey: "driver_id",
-});
+Driver.hasMany(DayPriceDriver, { as: "day_price_drivers", foreignKey: "driver_id" });
 DriverInfo.belongsTo(Driver, { as: "driver", foreignKey: "driver_id" });
 Driver.hasMany(DriverInfo, { as: "driver_infos", foreignKey: "driver_id" });
 DriverRating.belongsTo(Driver, { as: "driver", foreignKey: "driver_id" });
@@ -74,34 +67,19 @@ Driver.hasMany(Order, { as: "orders", foreignKey: "driver_id" });
 RateDriver.belongsTo(Driver, { as: "driver", foreignKey: "driver_id" });
 Driver.hasMany(RateDriver, { as: "rate_drivers", foreignKey: "driver_id" });
 SendOrderDriver.belongsTo(Driver, { as: "driver", foreignKey: "driver_id" });
-Driver.hasMany(SendOrderDriver, {
-  as: "send_order_drivers",
-  foreignKey: "driver_id",
-});
+Driver.hasMany(SendOrderDriver, { as: "send_order_drivers", foreignKey: "driver_id" });
 WaitingOrder.belongsTo(Driver, { as: "driver", foreignKey: "driver_id" });
 Driver.hasMany(WaitingOrder, { as: "waiting_orders", foreignKey: "driver_id" });
-Driver.belongsTo(DriverStatus, {
-  as: "status_driver",
-  foreignKey: "driver_status",
-});
+Driver.belongsTo(DriverStatus, { as: "status_driver", foreignKey: "driver_status" });
 DriverStatus.hasMany(Driver, { as: "drivers", foreignKey: "driver_status" });
 CancelOrderDriver.belongsTo(Order, { as: "order", foreignKey: "order_id" });
-Order.hasMany(CancelOrderDriver, {
-  as: "cancel_order_drivers",
-  foreignKey: "order_id",
-});
+Order.hasMany(CancelOrderDriver, { as: "cancel_order_drivers", foreignKey: "order_id" });
 CompletedOrder.belongsTo(Order, { as: "order", foreignKey: "order_id" });
-Order.hasMany(CompletedOrder, {
-  as: "completed_orders",
-  foreignKey: "order_id",
-});
+Order.hasMany(CompletedOrder, { as: "completed_orders", foreignKey: "order_id" });
 DriverRating.belongsTo(Order, { as: "order", foreignKey: "order_id" });
 Order.hasMany(DriverRating, { as: "driver_ratings", foreignKey: "order_id" });
 SendOrderDriver.belongsTo(Order, { as: "order", foreignKey: "order_id" });
-Order.hasMany(SendOrderDriver, {
-  as: "send_order_drivers",
-  foreignKey: "order_id",
-});
+Order.hasMany(SendOrderDriver, { as: "send_order_drivers", foreignKey: "order_id" });
 WaitingOrder.belongsTo(Order, { as: "order", foreignKey: "order_id" });
 Order.hasMany(WaitingOrder, { as: "waiting_orders", foreignKey: "order_id" });
 Order.belongsTo(OrderStatus, { as: "status", foreignKey: "status_id" });
@@ -126,6 +104,7 @@ module.exports = {
   DriverRating,
   DriverStatus,
   EmptyDriver,
+  KeshBackRegister,
   Order,
   OrderStatus,
   Rate,

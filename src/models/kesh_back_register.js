@@ -1,28 +1,23 @@
 const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('Client', {
+module.exports = function (sequelize, DataTypes) {
+  return sequelize.define('KeshBackRegister', {
     id: {
       autoIncrement: true,
       type: DataTypes.INTEGER,
       allowNull: false,
       primaryKey: true
     },
-    password: {
-      type: DataTypes.STRING(50),
-      allowNull: true
+    datetime: {
+      type: DataTypes.INTEGER,
+      allowNull: false
     },
-    name: {
-      type: DataTypes.STRING(50),
-      allowNull: true
-    },
-    number: {
-      type: DataTypes.STRING(255),
+    profit: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-      unique: "number"
     }
   }, {
     sequelize,
-    tableName: 'client',
+    tableName: 'kesh_back_register',
     timestamps: false,
     indexes: [
       {
@@ -34,11 +29,10 @@ module.exports = function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "number",
-        unique: true,
+        name: "profit",
         using: "BTREE",
         fields: [
-          { name: "number" },
+          { name: "profit" },
         ]
       },
     ]

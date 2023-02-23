@@ -41,5 +41,8 @@ router.get(
   auth(),
   awaitHandlerFactory(orderCompletedController.all)
 );
+// update kashbek 
+
+router.get('/keshbek/:id', auth(), awaitHandlerFactory(orderController.kashber_update))
 
 module.exports = router;
