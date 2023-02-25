@@ -859,6 +859,11 @@ class UserController extends BaseController {
         type: 2,
       },
     });
+    const clients = await Client.findOne({
+      where: {
+        id: orders.dataValues.client_id,
+      }
+    })
     if (wait_order) {
       drivers.driver_status = 2;
     } else {
@@ -870,6 +875,15 @@ class UserController extends BaseController {
     orders.closing_date = Math.floor(new Date().getTime() / 1000);
     orders.status_id = 4;
 
+    if (orders.dataValues.kashbek_add == 1) {
+      if (parseFloat(summa) >= parseFloat(clients.dataValues.keshbek_summa)) {
+        clients.dataValues.keshbek_summa = 0
+        cash = parseFloat(clients.dataValues.keshbek_summa)
+      } else {
+        clients.dataValues.keshbek_summa = parseFloat(clients.dataValues.keshbek_summa) - parseFloat(summa)
+        cash = parseFloat(clients.dataValues.keshbek_summa) - parseFloat(summa)
+      }
+    }
     const order_completed = await CompletedOrder.create({
       order_id: id,
       summa,
@@ -883,20 +897,13 @@ class UserController extends BaseController {
       driver_id: req.currentUser.id,
     });
 
-    if (orders.dataValues.kashbek_add == 1) {
-      const cashs = await KeshBackRegister.findOne({
-        order: [['datetime', 'DESC']]
-      })
-      if (cashs) {
-        const clients = await Client.findOne({
-          where: {
-            id: orders.dataValues.client_id,
-          }
-        })
-        clients.keshbek_summa = parseFloat(clients.keshbek_summa) + parseFloat(summa) / 100 * parseFloat(cashs.dataValues.profit)
-        clients.save()
-      }
+    const cashs = await KeshBackRegister.findOne({
+      order: [['datetime', 'DESC']]
+    })
+    if (cashs) {
+      clients.keshbek_summa = parseFloat(clients.keshbek_summa) + parseFloat(summa) / 100 * parseFloat(cashs.dataValues.profit)
     }
+    clients.save()
 
     orders.dataValues.info = order_completed;
     orders.dataValues.driver = drivers;
